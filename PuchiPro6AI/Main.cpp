@@ -163,7 +163,7 @@ public:
 
 	StdState()
 	{
-		W = H = N = M = 0;
+		remainedTime = W = H = N = M = 0;
 	}
 
 	static StdState Input(int w, int h, int n, int m)
@@ -405,36 +405,66 @@ public:
 	}
 };
 
-class State
+class States
 {
 public:
-	StdState stdState;
-	bool isEnd;
+	int dep; //ƒQ[ƒ€ƒ‹[ƒ‹‚Æˆá‚¢A‹ô”‚ªæU‚ÅŠï”‚ªŒãU
+	StdState state[2];
+	bool isEnd[2];
 
-	State(int w, int h, int n, int m)
+	States()
 	{
-		stdState = StdState::Input(w, h, n, m);
-		isEnd = true;
+		dep = 0;
+		isEnd[0] = isEnd[1] = false;
+	}
+
+	static States Input(int w, int h, int n, int m)
+	{
+		States res;
+		res.state[0] = StdState::Input(w, h, n, m);
+		res.state[1] = StdState::Input(w, h, n, m);
+		return res;
+	}
+
+	//-1‚È‚çƒQ[ƒ€‘±s’†
+	//2‚È‚çˆø‚«•ª‚¯
+	int GetWinner()
+	{
+		if (dep & 1) return -1;
+		if (isEnd[0] && isEnd[1]) return 2;
+		if (isEnd[0]) return 0;
+		if (isEnd[1]) return 1;
+		return -1;
+	}
+
+	double Evalute()
+	{
+		//TODO
+		//GetWinner()>=0‚È‚ç‚»‚ê‚È‚è‚Ìˆ—‚ğ‚·‚é
 	}
 };
 
 class Node
 {
 public:
-	int dep; //ƒQ[ƒ€ƒ‹[ƒ‹‚Æˆá‚¢A‹ô”‚ªæU‚ÅŠï”‚ªŒãU
 	int gamesCount;
-	double currentEval;
 	double evalSum;
 	vector<Node> nextNodes;
 
-	Node(int _dep, int _gamesCount)
+	Node()
 	{
-		//TODO
+		evalSum = 0;
 	}
 
 	double UCB(int allGamesCount)
 	{
 		//TODO
+	}
+
+	double Evalute()
+	{
+		//TODO
+		//GetWinner()>=0‚È‚ç‚»‚ê‚È‚è‚Ìˆ—‚ğ‚·‚é
 	}
 
 	void Visit()
@@ -443,14 +473,23 @@ public:
 		//gamesCount‚Ì‰ÁZ
 	}
 
-	void PlayOut()
+	double PlayOut(States states)
 	{
 		//TODO
 	}
 
-	double Search(State states[2], int allGamesCount)
+	double Search(States states, int allGamesCount)
 	{
+		int winner = states.GetWinner();
+		if (winner >= 0)
+		{
+			return states.Evalute();
+		}
 		Visit();
+		if (gamesCount < 30)
+		{
+			return PlayOut(states);
+		}
 		double ma = -DINF, index = -1;
 		for (int i = 0; i < nextNodes.size(); i++)
 		{
@@ -461,7 +500,10 @@ public:
 				index = i;
 			}
 		}
-
+		States copy = States(states);
+		double res = Search(copy, allGamesCount);
+		evalSum += res;
+		return res;
 	}
 };
 
