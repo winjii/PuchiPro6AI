@@ -28,6 +28,7 @@ private:
 		}
 	} initializer;
 public:
+	//[min, max)
 	static int Next(int min, int max)
 	{
 		unsigned int t;
@@ -36,8 +37,9 @@ public:
 		y = z;
 		z = w;
 		w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-		return min + (double)w*(max - min + 1) / ((double)UINT_MAX + 1);
+		return min + (double)w*(max - min) / ((double)UINT_MAX + 1);
 	}
+	//[0, max)
 	static int Next(int max)
 	{
 		return Next(0, max);
@@ -150,7 +152,7 @@ public:
 	}
 };
 
-class StdState
+class State
 {
 public:
 	int remainedTime;
@@ -161,14 +163,14 @@ public:
 	//rain[x]には, 列xに降る予定の玉を表す整数を降る順番に詰める
 	vector<queue<int> > rain;
 
-	StdState()
+	State()
 	{
 		remainedTime = W = H = N = M = 0;
 	}
 
-	static StdState Input(int w, int h, int n, int m)
+	static State Input(int w, int h, int n, int m)
 	{
-		StdState res;
+		State res;
 		res.W = w; res.H = h; res.N = n; res.M = m;
 		res.field.resize(w);
 		res.rain.resize(w);
@@ -321,7 +323,7 @@ public:
 		{
 			for (int y = 0; y < H; y++)
 			{
-				if (field[x][y].IsEmpty()) field[x][y] = Cell(1 + Rand::Next(2));
+				if (field[x][y].IsEmpty()) field[x][y] = Cell(1 + Rand::Next(M));
 			}
 		}
 	}
@@ -361,6 +363,16 @@ public:
 		return res;
 	}
 
+	void ReceiveOjamas(OjamaCalculator &oc)
+	{
+		bool isHard = oc.IsHard();
+		int ojamasCount = oc.Calculate();
+		for (int i = 0; i < ojamasCount; i++)
+		{
+			rain[Rand::Next(W)].push(isHard ? HARD_OJAMA : NORMAL_OJAMA);
+		}
+	}
+
 	double Evalute(const OjamaCalculator &oc)
 	{
 		vector< vector<bool> > used(W);
@@ -369,7 +381,7 @@ public:
 		{
 			double ma = 0, sum = 9;
 			int cnt = 0;
-			StdState copy(*this);
+			State copy(*this);
 			while (true)
 			{
 				copy.RainHardOjama();
@@ -388,6 +400,11 @@ public:
 		//if (oc.Calculate()*(oc.IsHard() ? 2 : 1) >= H*W*0.4) tmp = 1.2;
 		eval += (oc.Calculate()*(oc.IsHard() ? 2 : 1)/* + oc.ojamaErasure*0.5 + oc.weakness*0.5*/)*0.7;
 		return eval;
+	}
+
+	double EvaluteEnd()
+	{
+		//TODO
 	}
 
 	void Debug()
@@ -409,7 +426,7 @@ class States
 {
 public:
 	int dep; //ゲームルールと違い、偶数が先攻で奇数が後攻
-	StdState state[2];
+	State state[2];
 	bool isEnd[2];
 
 	States()
@@ -421,14 +438,24 @@ public:
 	static States Input(int w, int h, int n, int m)
 	{
 		States res;
-		res.state[0] = StdState::Input(w, h, n, m);
-		res.state[1] = StdState::Input(w, h, n, m);
+		res.state[0] = State::Input(w, h, n, m);
+		res.state[1] = State::Input(w, h, n, m);
 		return res;
+	}
+
+	State& GetActiveState()
+	{
+		return state[dep&1];
+	}
+
+	State& GetPassiveState()
+	{
+		return state[(dep + 1)&1];
 	}
 
 	//-1ならゲーム続行中
 	//2なら引き分け
-	int GetWinner()
+	int GetWinner() const
 	{
 		if (dep & 1) return -1;
 		if (isEnd[0] && isEnd[1]) return 2;
@@ -437,10 +464,27 @@ public:
 		return -1;
 	}
 
-	double Evalute()
+	//200ターン経過後の評価
+	double EvaluteEnd() const
+	{
+		//TODO
+	}
+
+	//ゲームオーバーも考慮する
+	double Evalute() const
 	{
 		//TODO
 		//GetWinner()>=0ならそれなりの処理をする
+	}
+
+	void SendOjamas(OjamaCalculator &oc)
+	{
+		GetPassiveState().ReceiveOjamas(oc);
+	}
+
+	void NextTurn(const Point &p)
+	{
+		//TODO
 	}
 };
 
@@ -450,32 +494,76 @@ public:
 	int gamesCount;
 	double evalSum;
 	vector<Node> nextNodes;
+	vector<Point> nextMoves;
 
 	Node()
 	{
 		evalSum = 0;
 	}
 
-	double UCB(int allGamesCount)
+	double UCB(int allGamesCount) const
 	{
 		//TODO
-	}
-
-	double Evalute()
-	{
-		//TODO
-		//GetWinner()>=0ならそれなりの処理をする
+		//gamesCount==0のときINF
 	}
 
 	void Visit()
 	{
 		//TODO
 		//gamesCountの加算
+		//nextNodesとnextMovesの生成
 	}
 
 	double PlayOut(States states)
 	{
 		//TODO
+		while (true)
+		{
+			//少なくともどちらかがゲームオーバー
+			if (states.GetWinner() >= 0)
+			{
+
+			}
+			//200ターンが終了
+			if (states.dep > 200)
+			{
+				return states.EvaluteEnd();
+			}
+
+			State &activeState = states.GetActiveState();
+			vector< vector<bool> > used(activeState.W);
+			for (int i = 0; i < activeState.W; i++) used[i].resize(activeState.H, false);
+
+			double ma = -DINF;
+			Point res;
+			State nextState;
+			OjamaCalculator oc;
+			for (int x = 0; x < activeState.W; x++)
+			{
+				for (int y = 0; y < activeState.H; y++)
+				{
+					if (!activeState.field[x][y].IsColorful() || used[x][y]) continue;
+					vector<Point> colorfulLump = activeState.GetLump(Point(x, y), used);
+					if (colorfulLump.size() < activeState.N) continue;
+					OjamaCalculator _oc = activeState.CountOjamas(colorfulLump);
+					State copy(activeState);
+					copy.Erase(colorfulLump);
+					copy.Rain();
+					copy.RandomRain();
+					double eval = copy.Evalute(_oc);
+					if (ma < eval)
+					{
+						ma = eval;
+						res = Point(x, y);
+						nextState = copy;
+						_oc = _oc;
+					}
+				}
+			}
+			states.dep++;
+			states.GetActiveState() = nextState;
+			states.SendOjamas(oc);
+		}
 	}
 
 	double Search(States states, int allGamesCount)
@@ -500,14 +588,14 @@ public:
 				index = i;
 			}
 		}
-		States copy = States(states);
-		double res = Search(copy, allGamesCount);
+		states.NextTurn(nextMoves[index]);
+		double res = nextNodes[index].Search(states, allGamesCount);
 		evalSum += res;
 		return res;
 	}
 };
 
-Point Think(const StdState &root)
+Point Think(const State &root)
 {
 	vector< vector<bool> > used(root.W);
 	for (int i = 0; i < root.W; i++) used[i].resize(root.H, false);
@@ -521,14 +609,14 @@ Point Think(const StdState &root)
 			if (!root.field[x][y].IsColorful() || used[x][y]) continue;
 			vector<Point> colorfulLump = root.GetLump(Point(x, y), used);
 			if (colorfulLump.size() < root.N) continue;
-			StdState tmp(root);
+			State tmp(root);
 			OjamaCalculator oc = root.CountOjamas(colorfulLump);
 			tmp.Erase(colorfulLump);
 			tmp.Rain();
 			double sum = 0;
 			for (int i = 0; i < 10; i++)
 			{
-				StdState copy(tmp);
+				State copy(tmp);
 				copy.RandomRain();
 				sum += copy.Evalute(oc);
 			}
@@ -559,8 +647,8 @@ int main()
 	int turn = 0;
 	while (true)
 	{
-		StdState myState = StdState::Input(w, h, n, m);
-		StdState rivalState = StdState::Input(w, h, n, m);
+		State myState = State::Input(w, h, n, m);
+		State rivalState = State::Input(w, h, n, m);
 
 		Point ans = Think(myState);
 		cout << ans.x + 1 << " " << ans.y + 1 << endl;
