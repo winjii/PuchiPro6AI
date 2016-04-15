@@ -391,11 +391,10 @@ public:
 			State copy(*this);
 			while (true)
 			{
-				copy.RainHardOjama();
 				vector<Point> mi = copy.GetMin();
 				if (mi.size() == 0) break;
 				OjamaCalculator oc_ = copy.CountOjamas(mi);
-				double score = oc_.Calculate()*(oc_.IsHard() ? 2 : 1) + oc_.ojamaErasure*0.5 + oc_.weakness*0.5;
+				double score = oc_.Calculate()*(oc_.IsHard() ? 2 : 1) + oc_.ojamaErasure + oc_.weakness*0.5;
 				ma = max(ma, score);
 				sum += score;
 				copy.Erase(mi);
@@ -403,7 +402,7 @@ public:
 				remains -= mi.size();
 				cnt++;
 			}
-			if (remains > 0) eval += sum - remains*0.03 - cnt*0.5;
+			if (remains > 0) eval += ma + sum - remains*0.5;
 			//double ma = 0;
 			//int cnt = 0;
 			//for (int x = 0; x < W; x++)
@@ -420,7 +419,7 @@ public:
 			//eval += ma - cnt*0.5;
 		}
 		//if (oc.Calculate()*(oc.IsHard() ? 2 : 1) >= H*W*0.4) tmp = 1.2;
-		eval += (oc.Calculate()*(oc.IsHard() ? 2 : 1) + oc.ojamaErasure*0.5 + oc.weakness*0.5)*0.7;
+		eval += (oc.Calculate()*(oc.IsHard() ? 2 : 1) + oc.ojamaErasure + oc.weakness*0.5);
 		return eval;
 	}
 
@@ -557,8 +556,8 @@ public:
 	{
 		int ojamaCount[2] = {state[0].EvaluteTurnOver(), state[1].EvaluteTurnOver()};
 		if (ojamaCount[0] == ojamaCount[1]) return 0;
-		if (ojamaCount[0] > ojamaCount[1]) return -10;
-		if (ojamaCount[0] < ojamaCount[1]) return 10;
+		if (ojamaCount[0] > ojamaCount[1]) return -100;
+		if (ojamaCount[0] < ojamaCount[1]) return 100;
 		fprintf(stderr, "!");
 		return 0;
 	}
@@ -680,8 +679,7 @@ public:
 					State copy(activeState);
 					copy.Erase(colorfulLump);
 					copy.Rain();
-					copy.RandomRain();
-					double eval = copy.Evalute(OjamaCalculator());
+					double eval = copy.Evalute(_oc);
 					if (ma < eval)
 					{
 						ma = eval;
@@ -696,6 +694,7 @@ public:
 				states.dep++;
 				continue;
 			}
+			nextState.RandomRain();
 			states.GetActiveState() = nextState;
 			states.SendOjamas(oc);
 			states.dep++;
