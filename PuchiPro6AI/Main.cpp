@@ -387,7 +387,7 @@ public:
 		for (int i = 0; i < W; i++) used[i].resize(H, false);
 		{
 			double ma = 0, sum = 0;
-			int cnt = W*H;
+			int remains = W*H, cnt = 0;
 			State copy(*this);
 			while (true)
 			{
@@ -400,9 +400,10 @@ public:
 				sum += score;
 				copy.Erase(mi);
 				copy.Rain();
-				cnt -= mi.size();
+				remains -= mi.size();
+				cnt++;
 			}
-			if (cnt > 0) eval += sum - cnt*0.25;
+			if (remains > 0) eval += sum - remains*0.03 - cnt*0.5;
 			//double ma = 0;
 			//int cnt = 0;
 			//for (int x = 0; x < W; x++)
@@ -614,7 +615,7 @@ public:
 		if (gamesCount == 0) return DINF;
 		//ˆø”‚É‚æ‚Á‚Ä‚ÍŠú‘Ò’l‚ð‚Ð‚Á‚­‚è•Ô‚·
 		int r = willReverse ? -1 : 1;
-		return evalSum*r/(double)gamesCount + 0.1*sqrt(log(allGamesCount)/(double)gamesCount);
+		return evalSum*r/(double)gamesCount + 0.15*sqrt(log(allGamesCount)/(double)gamesCount);
 	}
 
 	void Develop(const State &activeState)
@@ -643,7 +644,7 @@ public:
 				return states.EvaluteGameOver();
 			}
 			//[‚³ŒÀŠE
-			if (states.dep - currentStates.dep > 12)
+			if (states.dep - currentStates.dep > 10)
 			{
 				double res = states.EvaluteLeaf();
 				if (abs(res) > 1e-8)
@@ -679,7 +680,8 @@ public:
 					State copy(activeState);
 					copy.Erase(colorfulLump);
 					copy.Rain();
-					double eval = copy.Evalute(_oc);
+					copy.RandomRain();
+					double eval = copy.Evalute(OjamaCalculator());
 					if (ma < eval)
 					{
 						ma = eval;
@@ -694,7 +696,6 @@ public:
 				states.dep++;
 				continue;
 			}
-			nextState.RandomRain();
 			states.GetActiveState() = nextState;
 			states.SendOjamas(oc);
 			states.dep++;
