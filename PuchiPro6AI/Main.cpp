@@ -686,6 +686,11 @@ public:
 			{
 				return states.EvaluteGameOver();
 			}
+			//200ターンが終了
+			if (states.dep >= 400)
+			{
+				return states.EvaluteTurnOver();
+			}
 			//深さ限界
 			if (states.dep - currentStates.dep > 16)
 			{
@@ -695,11 +700,6 @@ public:
 					fprintf(stderr, "");
 				}
 				return res;
-			}
-			//200ターンが終了
-			if (states.dep > 200)
-			{
-				return states.EvaluteTurnOver();
 			}
 
 			State &activeState = states.GetActiveState();
@@ -749,6 +749,13 @@ public:
 	{
 		//for (int i = 0; i <= states.dep; i++) fprintf(stderr, " ");
 		//fprintf(stderr, "dep = %d\n", states.dep);
+		//200ターンが経過
+		if (states.dep >= 400)
+		{
+			double res = -states.EvaluteTurnOver();
+			evalSum += res;
+			return res;
+		}
 		//どちらかがゲームオーバー
 		if (states.GetWinner() >= 0)
 		{
