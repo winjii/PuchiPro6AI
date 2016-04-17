@@ -752,7 +752,7 @@ public:
 		//200ƒ^[ƒ“‚ªŒo‰ß
 		if (states.dep >= 400)
 		{
-			double res = -states.EvaluteTurnOver();
+			double res = states.EvaluteTurnOver();
 			evalSum += res;
 			return res;
 		}
