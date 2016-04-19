@@ -845,7 +845,7 @@ int main()
 
 		Point ans = Think(currentStates);
 		cout << ans.x + 1 << " " << ans.y + 1 << endl;
-		turn++;
+		currentStates.NextMyTurn();
 	}
 	return 0;
 }
