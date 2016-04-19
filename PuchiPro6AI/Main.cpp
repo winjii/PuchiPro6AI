@@ -392,12 +392,12 @@ public:
 		}
 	}
 
-	double Evalute(const OjamaCalculator &oc)
+	double EvaluteField() const
 	{
 		bool used[W][H] = {};
 		double eval = 0;
 		State copy(*this);
-		copy.RainHardOjama();
+		//copy.RainHardOjama();
 		{
 			double sum = 0, ma = 0;
 			int cnt = 0;
@@ -425,45 +425,21 @@ public:
 					if (!copy.field[x][y].IsEmpty()) remains++;
 				}
 			}
-			eval -= remains*0.01;
-
-			//double ma = 0, sum = 0;
-			//int remains = W*H, cnt = 0;
-			//State copy(*this);
-			//while (true)
-			//{
-			//	vector<Point> mi = copy.GetMin();
-			//	if (mi.size() == 0) break;
-			//	OjamaCalculator oc_ = copy.CountOjamas(mi);
-			//	double score = oc_.Calculate()*(oc_.IsHard() ? 2 : 1) + oc_.ojamaErasure + oc_.weakness*0.5;
-			//	ma = max(ma, score);
-			//	sum += score;
-			//	copy.Erase(mi);
-			//	copy.Rain();
-			//	remains -= mi.size();
-			//	cnt++;
-			//}
-			//if (remains > 0) eval += ma + sum - remains*0.5;
-
-			//double ma = 0;
-			//int cnt = 0;
-			//for (int x = 0; x < W; x++)
-			//{
-			//	for (int y = 0; y < H; y++)
-			//	{
-			//		vector<Point> colorfulLump = GetLump(Point(x, y), used);
-			//		cnt++;
-			//		if (colorfulLump.size() < N) continue;
-			//		OjamaCalculator _oc = CountOjamas(colorfulLump);
-			//		ma = max(ma, (double)_oc.Calculate()*(_oc.IsHard() ? 2 : 1));
-			//	}
-			//}
-			//eval += ma - cnt*0.5;
-
-			eval += (oc.Calculate()*(oc.IsHard() ? 2 : 1) + oc.ojamaErasure*0.5 + oc.weakness*0.5)*0.7/(double)cnt;
+			eval -= remains*0.015;
 		}
-		//if (oc.Calculate()*(oc.IsHard() ? 2 : 1) >= H*W*0.4) tmp = 1.2;
 		return eval;
+	}
+
+	double Evalute(const OjamaCalculator &oc, double rivalEval)
+	{
+		double eval = EvaluteField();
+		eval += (oc.Calculate()*(oc.IsHard() ? 2 : 1) + oc.ojamaErasure*0.5 + oc.weakness*0.5)*0.05;
+		return eval;
+	}
+
+	double Evalute(const OjamaCalculator &oc, const State &rivalState)
+	{
+		return Evalute(oc, rivalState.EvaluteField());
 	}
 
 	//200ターン経過後の評価
@@ -609,7 +585,7 @@ public:
 	{
 		//手抜き
 		int ojamaCount[2] = {state[0].EvaluteTurnOver(), state[1].EvaluteTurnOver()};
-		double eval[2] = {state[0].Evalute(OjamaCalculator()), state[1].Evalute(OjamaCalculator())};
+		double eval[2] = {state[0].Evalute(OjamaCalculator(), state[1]), state[1].Evalute(OjamaCalculator(), state[0])};
 		return (double)(eval[0]*5 + ojamaCount[1] - eval[1]*5 - ojamaCount[0]);
 	}
 
@@ -671,7 +647,7 @@ public:
 #pragma omp atomic
 		gamesCount++;
 		//初めてしきい値を超えたら展開
-		if (gamesCount == 10)
+		if (gamesCount == 7)
 		{
 			Develop(activeState);
 		}
@@ -706,6 +682,7 @@ public:
 			bool used[W][H] = {};
 
 			double ma = -DINF;
+			double passiveEval = states.GetPassiveState().EvaluteField();
 			Point res;
 			State nextState;
 			OjamaCalculator oc;
@@ -722,7 +699,8 @@ public:
 					State copy(activeState);
 					copy.Erase(colorfulLump);
 					copy.Rain();
-					double eval = copy.Evalute(_oc);
+					if (!states.IsWinjii()) copy.RandomRain();
+					double eval = copy.Evalute(_oc, passiveEval);
 					if (ma < eval)
 					{
 						ma = eval;
@@ -737,10 +715,9 @@ public:
 				states.dep++;
 				continue;
 			}
-			nextState.RandomRain();
+			if (states.IsWinjii()) nextState.RandomRain();
 			states.GetActiveState() = nextState;
 			states.SendOjamas(oc);
-			if (!states.IsWinjii()) states.SendOjamas(oc);
 			states.dep++;
 		}
 	}
