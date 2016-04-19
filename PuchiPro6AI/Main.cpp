@@ -586,7 +586,7 @@ public:
 		//Žè”²‚«
 		int ojamaCount[2] = {state[0].EvaluteTurnOver(), state[1].EvaluteTurnOver()};
 		double eval[2] = {state[0].Evalute(OjamaCalculator(), state[1]), state[1].Evalute(OjamaCalculator(), state[0])};
-		return (double)(eval[0]*3 + ojamaCount[1] - eval[1]*3 - ojamaCount[0]);
+		return (double)(eval[0]*5 + ojamaCount[1] - eval[1]*5 - ojamaCount[0]);
 	}
 
 	void SendOjamas(OjamaCalculator &oc)
