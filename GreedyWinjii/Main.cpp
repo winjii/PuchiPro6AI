@@ -699,7 +699,7 @@ public:
 					State copy(activeState);
 					copy.Erase(colorfulLump);
 					copy.Rain();
-					if (/*!states.IsWinjii()*/false) copy.RandomRain();
+					if (!states.IsWinjii()) copy.RandomRain();
 					double eval = copy.Evalute(_oc, passiveEval);
 					if (ma < eval)
 					{
@@ -715,7 +715,7 @@ public:
 				states.dep++;
 				continue;
 			}
-			if (/*states.IsWinjii()*/true) nextState.RandomRain();
+			if (states.IsWinjii()) nextState.RandomRain();
 			states.GetActiveState() = nextState;
 			states.SendOjamas(oc);
 			states.dep++;
@@ -790,42 +790,28 @@ public:
 
 Point Think(States &firstStates)
 {
-	int allGamesCount = 0;
-	Node root;
-	root.Develop(firstStates.GetActiveState());
-#pragma omp parallel for
-	for (int i = 0; i < 1000; i++)
-	{
-		//fprintf(stderr, "allGamesCount == %d\n", i);
-		States states(firstStates);
-		root.Search(states, allGamesCount);
-#pragma omp atomic
-		allGamesCount++;
-	}
-
-	for (int x = 0; x < 9; x++)
-	{
-		for (int y = 0; y < 15; y++)
-		{
-			fprintf(stderr, "(%d,%d), %d/%d, %f,  %f\n", x, y, root.nextNodes[x][y].gamesCount, allGamesCount, root.nextNodes[x][y].evalSum, root.nextNodes[x][y].UCB(false, 200));
-		}
-	}
-
 	Point res;
-	int ma = 0;
-	for (int x = 0; x < /*firstStates.GetActiveState().*/W; x++)
+	double ma = -DINF;
+	bool used[W][H] = {};
+	for (int x = 0; x < W; x++)
 	{
-		for (int y = 0; y < /*firstStates.GetActiveState().*/H; y++)
+		for (int y = 0; y < H; y++)
 		{
-			if (ma < root.nextNodes[x][y].gamesCount)
+			if (!firstStates.GetActiveState().field[x][y].IsColorful() || used[x][y]) continue;
+			vector<Point> colorfulLump = firstStates.GetActiveState().GetLump(Point(x, y), used);
+			if (colorfulLump.size() < N) continue;
+			OjamaCalculator oc = firstStates.GetActiveState().CountOjamas(colorfulLump);
+			States copy(firstStates);
+			copy.GetActiveState().Erase(colorfulLump);
+			copy.GetActiveState().Rain();
+			double eval = copy.GetActiveState().Evalute(oc, copy.GetPassiveState());
+			if (ma < eval)
 			{
-				ma = root.nextNodes[x][y].gamesCount;
+				ma = eval;
 				res = Point(x, y);
 			}
 		}
 	}
-	fprintf(stderr, "%d\n", ma);
-	fflush(stderr);
 	return res;
 }
 

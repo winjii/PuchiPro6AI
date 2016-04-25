@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PuchiPro6AI", "PuchiPro6AI\PuchiPro6AI.vcxproj", "{54513143-7901-4B2A-BB54-9A3EE4201DCC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GreedyWinjii", "GreedyWinjii\GreedyWinjii.vcxproj", "{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{54513143-7901-4B2A-BB54-9A3EE4201DCC}.Release|x64.Build.0 = Release|x64
 		{54513143-7901-4B2A-BB54-9A3EE4201DCC}.Release|x86.ActiveCfg = Release|Win32
 		{54513143-7901-4B2A-BB54-9A3EE4201DCC}.Release|x86.Build.0 = Release|Win32
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Debug|x64.ActiveCfg = Debug|x64
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Debug|x64.Build.0 = Debug|x64
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Debug|x86.ActiveCfg = Debug|Win32
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Debug|x86.Build.0 = Debug|Win32
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Release|x64.ActiveCfg = Release|x64
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Release|x64.Build.0 = Release|x64
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Release|x86.ActiveCfg = Release|Win32
+		{4F3DA859-A3AE-4903-B18F-66CFA5F368AA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
