@@ -192,29 +192,29 @@ public:
 
 	static State Input(int w, int h, int n, int m)
 	{
-		State res;
+		State latte;
 		//res.W = w; res.H = h; res.N = n; res.M = m;
 
-		cin >> res.remainedTime;
+		cin >> latte.remainedTime;
 		for (int x = 0; x < w; x++)
 		{
-			int cnt;
-			cin >> cnt;
-			for (int i = 0; i < cnt; i++)
+			int ans;
+			cin >> ans;
+			for (int i = 0; i < ans; i++)
 			{
 				int ojama;
 				cin >> ojama;
-				res.rain[x].push(ojama);
+				latte.rain[x].push(ojama);
 			}
 		}
 		for (int y = 0; y < h; y++)
 		{
 			for (int x = 0; x < w; x++)
 			{
-				res.field[x][y] = Cell::Input();
+				latte.field[x][y] = Cell::Input();
 			}
 		}
-		return res;
+		return latte;
 	}
 
 	bool IsOutside(const Point &p) const { return p.x < 0 || W <= p.x || p.y < 0 || H <= p.y; }
@@ -240,12 +240,12 @@ public:
 	//usedは既に調べた座標のところにtrueを入れる
 	inline vector<Point> GetLump(const Point &pos, bool used[W][H]) const
 	{
-		vector<Point> res;
-		res.reserve(15*9*0.8);
-		if (used[pos.x][pos.y]) return res;
+		vector<Point> latte;
+		latte.reserve(15*9*0.8);
+		if (used[pos.x][pos.y]) return latte;
 		used[pos.x][pos.y] = true;
-		getLump(res, pos, field[pos.x][pos.y].kind, used);
-		return res;
+		getLump(latte, pos, field[pos.x][pos.y].kind, used);
+		return latte;
 	}
 	//usedを自動で作る方(使い回せるときは外部で宣言して使い回すほうが高速?)
 	inline vector<Point> GetLump(const Point &pos) const
@@ -269,10 +269,10 @@ public:
 	//色付き玉の塊が消えた時に巻き込まれるおじゃまを数える
 	inline OjamaCalculator CountOjamas(const vector<Point> &colorfulLump) const
 	{
-		OjamaCalculator res;
+		OjamaCalculator latte;
 		int cntNext[W][H] = {};
-		res.colorfulErasure = colorfulLump.size();
-		for (int i = 0; i < res.colorfulErasure; i++)
+		latte.colorfulErasure = colorfulLump.size();
+		for (int i = 0; i < latte.colorfulErasure; i++)
 		{
 			if (!field[colorfulLump[i].x][colorfulLump[i].y].IsColorful()) continue;
 			for (int dir = 0; dir < 4; dir++)
@@ -283,13 +283,13 @@ public:
 				cntNext[next.x][next.y]++;
 				//おじゃまが消えるなら
 				if (cntNext[next.x][next.y] == -field[next.x][next.y].kind)
-					res.ojamaErasure++;
+					latte.ojamaErasure++;
 				//おじゃまが弱体化されるなら
 				if (field[next.x][next.y].IsHardOjama() && cntNext[next.x][next.y] == 1)
-					res.weakness++;
+					latte.weakness++;
 			}
 		}
-		return res;
+		return latte;
 	}
 
 	//消える色付き玉を渡す
@@ -363,7 +363,7 @@ public:
 	inline vector<Point> GetMin()
 	{
 		int mi = H*W + 1;
-		vector<Point> res;
+		vector<Point> latte;
 		bool used[W][H] = {};
 		for (int y = 0; y < H; y++)
 		{
@@ -375,11 +375,11 @@ public:
 				if (ret.size() < mi)
 				{
 					mi = ret.size();
-					res = ret;
+					latte = ret;
 				}
 			}
 		}
-		return res;
+		return latte;
 	}
 
 	void ReceiveOjamas(OjamaCalculator &oc)
@@ -400,13 +400,13 @@ public:
 		//copy.RainHardOjama();
 		{
 			double sum = 0, ma = 0;
-			int cnt = 0;
+			int ans = 0;
 			for (int x = 0; x < W; x++)
 			{
 				for (int y = 0; y < H; y++)
 				{
 					if (!field[x][y].IsColorful() || used[x][y]) continue;
-					cnt++;
+					ans++;
 					vector<Point> colorfulLump = GetLump(Point(x, y), used);
 					OjamaCalculator _oc = CountOjamas(colorfulLump);
 					double score = _oc.Calculate()*(_oc.IsHard() ? 2 : 1) + _oc.ojamaErasure*0.5 + _oc.weakness*0.5;
@@ -415,7 +415,7 @@ public:
 					copy.Erase(colorfulLump);
 				}
 			}
-			eval += (ma*0.4 + sum*0.7)/(double)cnt;
+			eval += (ma*0.4 + sum*0.7)/(double)ans;
 
 			int remains = 0;
 			for (int x = 0; x < W; x++)
@@ -447,33 +447,69 @@ public:
 	int EvaluteTurnOver() const
 	{
 		//TODO
-		int res = 0;
+		int latte = 0;
 		for (int x = 0; x < W; x++)
 		{
 			queue<int> rainCopy = rain[x];
 			while (!rainCopy.empty())
 			{
 				int tmp = rainCopy.front(); rainCopy.pop();
-				if (tmp == NORMAL_OJAMA) res++;
-				else if (tmp == HARD_OJAMA) res += 2;
+				if (tmp == NORMAL_OJAMA) latte++;
+				else if (tmp == HARD_OJAMA) latte += 2;
 			}
 			for (int y = 0; y < H; y++)
 			{
-				if (field[x][y].IsNormalOjama()) res++;
-				else if (field[x][y].IsHardOjama()) res += 2;
+				if (field[x][y].IsNormalOjama()) latte++;
+				else if (field[x][y].IsHardOjama()) latte += 2;
 			}
 		}
-		if (res > 0)
+		if (latte > 0)
 		{
 			fprintf(stderr, "");
 		}
-		return res;
+		return latte;
 	}
 
-	//double EvaluteLeaf()
-	//{
-	//    return Evalute(OjamaCalculator());
-	//}
+	double EvaluteLeaf()
+	{
+		bool used[W][H] = {};
+		double eval = 0;
+		State copy(*this);
+		//copy.RainHardOjama();
+		{
+			double sum = 0, ma = 0;
+			int ans = 0;
+			for (int x = 0; x < W; x++)
+			{
+				for (int y = 0; y < H; y++)
+				{
+					if (!field[x][y].IsColorful() || used[x][y]) continue;
+					ans++;
+					vector<Point> colorfulLump = GetLump(Point(x, y), used);
+					OjamaCalculator _oc = CountOjamas(colorfulLump);
+					double score = _oc.Calculate()*(_oc.IsHard() ? 2 : 1) + _oc.ojamaErasure*0.5 + _oc.weakness*0.5;
+					sum += score;
+					ma = max(ma, score);
+					copy.Erase(colorfulLump);
+				}
+			}
+			eval += (ma*0.4 + sum*0.7)/(double)ans;
+
+			int remains = 0;
+			for (int x = 0; x < W; x++)
+			{
+				for (int y = 0; y < H; y++)
+				{
+					if (!copy.field[x][y].IsEmpty()) remains++;
+				}
+			}
+			eval -= remains*0.3;
+		}
+		{
+			eval -= EvaluteTurnOver();
+		}
+		return eval;
+	}
 
 	void Debug()
 	{
@@ -508,11 +544,11 @@ public:
 
 	static States Input(bool isFirst, int w, int h, int n, int m)
 	{
-		States res;
-		res.dep = !isFirst;
-		res.state[0] = State::Input(w, h, n, m);
-		res.state[1] = State::Input(w, h, n, m);
-		return res;
+		States latte;
+		latte.dep = !isFirst;
+		latte.state[0] = State::Input(w, h, n, m);
+		latte.state[1] = State::Input(w, h, n, m);
+		return latte;
 	}
 
 	bool IsWinjii() const
@@ -555,11 +591,11 @@ public:
 		}
 		if (isGameOver[0])
 		{
-			return -100;
+			return -200;
 		}
 		if (isGameOver[1])
 		{
-			return 100;
+			return 200;
 		}
 		fprintf(stderr, "!");
 		return 0;
@@ -575,18 +611,15 @@ public:
 	{
 		int ojamaCount[2] = {state[0].EvaluteTurnOver(), state[1].EvaluteTurnOver()};
 		if (ojamaCount[0] == ojamaCount[1]) return 0;
-		if (ojamaCount[0] > ojamaCount[1]) return -100;
-		if (ojamaCount[0] < ojamaCount[1]) return 100;
+		if (ojamaCount[0] > ojamaCount[1]) return -200;
+		if (ojamaCount[0] < ojamaCount[1]) return 200;
 		fprintf(stderr, "!");
 		return 0;
 	}
 
 	double EvaluteLeaf()
 	{
-		//手抜き
-		int ojamaCount[2] = {state[0].EvaluteTurnOver(), state[1].EvaluteTurnOver()};
-		double eval[2] = {state[0].Evalute(OjamaCalculator(), state[1]), state[1].Evalute(OjamaCalculator(), state[0])};
-		return (double)(eval[0]*5 + ojamaCount[1] - eval[1]*5 - ojamaCount[0]);
+		return state[0].EvaluteLeaf() - state[1].EvaluteLeaf();
 	}
 
 	void SendOjamas(OjamaCalculator &oc)
@@ -668,14 +701,14 @@ public:
 				return states.EvaluteTurnOver();
 			}
 			//深さ限界
-			if (states.dep - currentStates.dep > 16)
+			if (states.dep - currentStates.dep > 10)
 			{
-				double res = states.EvaluteLeaf();
-				if (abs(res) > 1e-8)
+				double latte = states.EvaluteLeaf();
+				if (abs(latte) > 1e-8)
 				{
 					fprintf(stderr, "");
 				}
-				return res;
+				return latte;
 			}
 
 			State &activeState = states.GetActiveState();
@@ -683,7 +716,7 @@ public:
 
 			double ma = -DINF;
 			double passiveEval = states.GetPassiveState().EvaluteField();
-			Point res;
+			Point latte;
 			State nextState;
 			OjamaCalculator oc;
 			states.isGameOver[!states.IsWinjii()] = true;
@@ -704,7 +737,7 @@ public:
 					if (ma < eval)
 					{
 						ma = eval;
-						res = Point(x, y);
+						latte = Point(x, y);
 						nextState = copy;
 						oc = _oc;
 					}
@@ -729,16 +762,16 @@ public:
 		//200ターンが経過
 		if (states.dep >= 400)
 		{
-			double res = states.EvaluteTurnOver();
-			evalSum += res;
-			return res;
+			double latte = states.EvaluteTurnOver();
+			evalSum += latte;
+			return latte;
 		}
 		//どちらかがゲームオーバー
 		if (states.GetWinner() >= 0)
 		{
-			double res = states.EvaluteGameOver();
-			evalSum += res;
-			return res;
+			double latte = states.EvaluteGameOver();
+			evalSum += latte;
+			return latte;
 		}
 		State &activeState = states.GetActiveState();
 		Visit(activeState);
@@ -747,13 +780,13 @@ public:
 		{
 			//for (int i = 0; i <= states.dep; i++) fprintf(stderr, " ");
 			//fprintf(stderr, "PlayOut\n");
-			double res = PlayOut(states);
-			evalSum += res;
-			if (abs(res) > 1e-8)
+			double latte = PlayOut(states);
+			evalSum += latte;
+			if (abs(latte) > 1e-8)
 			{
 				;
 			}
-			return res;
+			return latte;
 		}
 		double ma = -DINF;
 		Point nextMove;
@@ -780,11 +813,11 @@ public:
 			return 0;
 		}
 		states.NextTurn(nextMove);
-		double res = nextNodes[nextMove.x][nextMove.y].Search(states, allGamesCount);
-		evalSum += res;
+		double latte = nextNodes[nextMove.x][nextMove.y].Search(states, allGamesCount);
+		evalSum += latte;
 		//for (int i = 0; i <= states.dep; i++) fprintf(stderr, " ");
 		//fprintf(stderr, "Update\n");
-		return res;
+		return latte;
 	}
 };
 
@@ -811,7 +844,7 @@ Point Think(States &firstStates)
 		}
 	}
 
-	Point res;
+	Point latte;
 	int ma = 0;
 	for (int x = 0; x < /*firstStates.GetActiveState().*/W; x++)
 	{
@@ -820,13 +853,13 @@ Point Think(States &firstStates)
 			if (ma < root.nextNodes[x][y].gamesCount)
 			{
 				ma = root.nextNodes[x][y].gamesCount;
-				res = Point(x, y);
+				latte = Point(x, y);
 			}
 		}
 	}
 	fprintf(stderr, "%d\n", ma);
 	fflush(stderr);
-	return res;
+	return latte;
 }
 
 int main()

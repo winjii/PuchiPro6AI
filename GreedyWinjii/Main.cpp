@@ -92,7 +92,7 @@ public:
 		x = _x; y = _y;
 	}
 	//座標を指定した方向に1マス動かす
-	void Move(int dir)
+	void MovePoint(int dir)
 	{
 		x += dx[dir]; y += dy[dir];
 	}
@@ -227,7 +227,7 @@ private:
 		for (int i = 0; i < 4; i++)
 		{
 			Point next(pos);
-			next.Move(i);
+			next.MovePoint(i);
 			if (IsOutside(next) || field[next.x][next.y].kind != kind || used[next.x][next.y])
 				continue;
 			used[next.x][next.y] = true;
@@ -278,7 +278,7 @@ public:
 			for (int dir = 0; dir < 4; dir++)
 			{
 				Point next(colorfulLump[i]);
-				next.Move(dir);
+				next.MovePoint(dir);
 				if (IsOutside(next) || !field[next.x][next.y].IsOjama()) continue;
 				cntNext[next.x][next.y]++;
 				//おじゃまが消えるなら
@@ -302,7 +302,7 @@ public:
 			for (int dir = 0; dir < 4; dir++)
 			{
 				Point next = colorfulLump[i];
-				next.Move(dir);
+				next.MovePoint(dir);
 				if (IsOutside(next) || !field[next.x][next.y].IsOjama()) continue;
 				AttackOjama(next);
 			}
@@ -594,7 +594,7 @@ public:
 		GetPassiveState().ReceiveOjamas(oc);
 	}
 
-	void NextTurn(const vector<Point> &colorfulLump)
+	void MovePoint(const vector<Point> &colorfulLump)
 	{
 		OjamaCalculator oc = GetActiveState().CountOjamas(colorfulLump);
 		GetActiveState().Erase(colorfulLump);
@@ -604,10 +604,10 @@ public:
 		dep++;
 	}
 
-	void NextTurn(const Point &p)
+	void MovePoint(const Point &p)
 	{
 		vector<Point> colorfulLump = GetActiveState().GetLump(p);
-		NextTurn(colorfulLump);
+		MovePoint(colorfulLump);
 	}
 };
 
@@ -616,27 +616,27 @@ States currentStates;
 class Node
 {
 public:
-	int gamesCount;
+	int gameCount;
 	double evalSum;
 	vector< vector<Node> > nextNodes;
 
 	Node()
 	{
-		gamesCount = 0;
+		gameCount = 0;
 		evalSum = 0;
 	}
 
-	double UCB(bool willReverse, int allGamesCount) const
+	double ucb(bool willReverse, int allGamesCount) const
 	{
 		//TODO 調整
 		//gamesCount==0のときINF
-		if (gamesCount == 0) return DINF;
+		if (gameCount == 0) return DINF;
 		//引数によっては期待値をひっくり返す
 		int r = willReverse ? -1 : 1;
-		return evalSum*r/(double)gamesCount + 100*sqrt(log(allGamesCount)/(double)gamesCount);
+		return evalSum*r/(double)gameCount + 100*sqrt(log(allGamesCount)/(double)gameCount);
 	}
 
-	void Develop(const State &activeState)
+	void develop(const State &activeState)
 	{
 		nextNodes.resize(/*activeState.*/W);
 		for (int x = 0; x < /*activeState.*/W; x++) nextNodes[x].resize(/*activeState.*/H);
@@ -645,15 +645,15 @@ public:
 	void Visit(const State &activeState)
 	{
 #pragma omp atomic
-		gamesCount++;
+		gameCount++;
 		//初めてしきい値を超えたら展開
-		if (gamesCount == 7)
+		if (gameCount == 7)
 		{
-			Develop(activeState);
+			develop(activeState);
 		}
 	}
 
-	double PlayOut(States states)
+	double playOut(States states)
 	{
 		while (true)
 		{
@@ -747,7 +747,7 @@ public:
 		{
 			//for (int i = 0; i <= states.dep; i++) fprintf(stderr, " ");
 			//fprintf(stderr, "PlayOut\n");
-			double res = PlayOut(states);
+			double res = playOut(states);
 			evalSum += res;
 			if (abs(res) > 1e-8)
 			{
@@ -766,7 +766,7 @@ public:
 				if (!activeState.field[x][y].IsColorful() || used[x][y]) continue;
 				vector<Point> colorfulLump = activeState.GetLump(Point(x, y), used);
 				if (colorfulLump.size() < /*activeState.*/N) continue;
-				double ucb = nextNodes[x][y].UCB(!states.IsWinjii(), allGamesCount);
+				double ucb = nextNodes[x][y].ucb(!states.IsWinjii(), allGamesCount);
 				if (ma < ucb)
 				{
 					ma = ucb;
@@ -779,7 +779,7 @@ public:
 			evalSum += 0;
 			return 0;
 		}
-		states.NextTurn(nextMove);
+		states.MovePoint(nextMove);
 		double res = nextNodes[nextMove.x][nextMove.y].Search(states, allGamesCount);
 		evalSum += res;
 		//for (int i = 0; i <= states.dep; i++) fprintf(stderr, " ");
@@ -824,7 +824,7 @@ int main()
 	isFirst = (tmp == 0) ? true : false;
 	cin >> myScore >> rivalScore;
 	cout << "Winjii" << endl;
-	int turn = 0;
+	int playerId = 0;
 	while (true)
 	{
 		currentStates = States::Input(isFirst, w, h, n, m);
