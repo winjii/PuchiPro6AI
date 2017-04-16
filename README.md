@@ -1,4 +1,4 @@
 ### PuchiPro6AI
-久留米高専プロラボ部で行われた[https://github.com/ProgrammingLab/puchipro6:title=puchipro6]のAIです。
+久留米高専プロラボ部で行われたhttps://github.com/ProgrammingLab/puchipro6のAIです。
 
 UCT探索をやってみた。
